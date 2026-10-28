@@ -60,7 +60,7 @@ STOCK_INICIAL = {
 # concurrentes al inventario compartido.
 
 PEDIDOS = [
-    ("PED-001", "Teclado mecanico", 4),
+    ("PED-001", "Teclado mecanico", 18),
     ("PED-002", "Raton gaming", 5),
     ("PED-003", "Monitor 24 pulgadas", 3),
     ("PED-004", "SSD 1 TB", 4),
