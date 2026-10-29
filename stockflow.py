@@ -10,22 +10,23 @@ from datos import (
 
 
 
-def procesar_pedido(stock:dict, pedido:tuple):
+def procesar_pedido(stock:dict, pedidos:tuple):
 
-    # PUNTO CRITICO
-    if stock[pedido[1]] >= pedido[2]:
+
+    for pedido in pedidos:
+        # PUNTO CRITICO
         with lock:
-            stock[pedido[1]] -= pedido[2]
-            print(f"Pedido {pedido[0]} procesado")
-    else:
-        print(f"""No hay suficientes unidades de {pedido[1]} para el pedido {pedido[0]}
-Unidades restantes: {stock[pedido[1]]}\n""")
+            if stock[pedido[1]] >= pedido[2]:
+                stock[pedido[1]] -= pedido[2]
+                print(f"Pedido {pedido[0]} procesado")
+            else:
+                print(f"""No hay suficientes unidades de {pedido[1]} para el pedido {pedido[0]}
+    Unidades restantes: {stock[pedido[1]]}\n""")
 
 
 if __name__ == "__main__":
 
     lock = threading.Lock()
-
     lista_hilos = [threading.Thread(target=procesar_pedido, args=(STOCK_INICIAL, PEDIDOS)) for _ in range(NUM_CAJAS - 1)]
 
     for hilo in lista_hilos:
