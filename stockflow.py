@@ -7,40 +7,48 @@ from datos import (
     NUM_REVISORES,
     NUM_TERMINALES,
 )
+import time
 
-
-
-def procesar_pedido(stock:dict, pedidos:tuple):
-    
-    global reposicion_requerida
+def procesar_pedido(stock:dict, pedidos:tuple, solicitudes:list, reposiciones:list):
 
     with semaforo:
         print("[SEMAFORO] Terminal ocupado")
         for pedido in pedidos:
             with condition:
-                while reposicion_requerida is True:
+                print("Condicion pedido entrada")
+                while stock[pedido[1]] < pedido[2]:
+                    print(f"Esperando en pedido {pedido}")
+
+                    if pedido not in solicitudes:
+                        solicitudes.append(pedido)
+                        condition.notify()
+
                     condition.wait()
 
-                # PUNTO CRITICO
-                with lock:
-                    if stock[pedido[1]] >= pedido[2]:
-                        stock[pedido[1]] -= pedido[2]
-                        print(f"Pedido {pedido[0]} procesado")
-                    else:
-                        reposicion_requerida = True
+                stock[pedido[1]] -= pedido[2]
+                print(f"Pedido {pedido[0]} procesado")
+                
                         
         print("[SEMAFORO] Terminal Liberado")
 
-def reposiciones_almacen(stock, reposiciones):
+def reposiciones_almacen(stock:dict, reposiciones:list, solicitudes:list):
 
     with condition:
-        while reposicion_requerida is True:
-            for producto, cantidad in stock.items():
-                for reposicion in reposiciones:
-                    if producto == reposicion[1]:
-                        cantidad += reposicion[2]
-                        stock.update({producto:cantidad})
-        condition.notify()
+        print("Condition almacen entrada")
+        while not solicitudes:
+            condition.wait()
+
+        solicitud = solicitudes.pop(0)
+
+        for producto, cantidad in stock.items():
+            for reposicion in reposiciones:
+                if producto == reposicion[1] and producto == solicitud[1]:
+                    cantidad += reposicion[2]
+                    stock.update({producto:cantidad})
+                    print("reposicion reposicionada")
+
+        condition.notify_all()
+        print("Notificacion hecha")
 
 
 
@@ -50,10 +58,10 @@ if __name__ == "__main__":
     semaforo = threading.Semaphore(NUM_TERMINALES)
     condition = threading.Condition()
 
-    reposicion_requerida = False
+    solicitudes_reposicion = []
     
-    lista_hilos_pedidos = [threading.Thread(target=procesar_pedido, args=(STOCK_INICIAL, PEDIDOS)) for _ in range(NUM_CAJAS - 1)]
-    lista_hilos_reposiciones = [threading.Thread(target=reposiciones_almacen, args=(STOCK_INICIAL, REPOSICIONES)) for _ in range(1)]
+    lista_hilos_pedidos = [threading.Thread(target=procesar_pedido, args=(STOCK_INICIAL, PEDIDOS, solicitudes_reposicion, REPOSICIONES)) for _ in range(NUM_CAJAS - 1)]
+    lista_hilos_reposiciones = [threading.Thread(target=reposiciones_almacen, args=(STOCK_INICIAL, REPOSICIONES, solicitudes_reposicion)) for _ in range(1)]
 
     for hilo in lista_hilos_pedidos:
         hilo.start()
