@@ -18,10 +18,11 @@ def procesar_pedido(stock:dict, pedidos:tuple, solicitudes:list, reposiciones:li
                 print("Condicion pedido entrada")
                 while stock[pedido[1]] < pedido[2]:
                     print(f"Esperando en pedido {pedido}")
-
+                    print(stock)
+                    print(reposiciones)
                     if pedido not in solicitudes:
                         solicitudes.append(pedido)
-                        condition.notify()
+                        condition.notify_all()
 
                     condition.wait()
 
@@ -60,8 +61,8 @@ if __name__ == "__main__":
 
     solicitudes_reposicion = []
     
-    lista_hilos_pedidos = [threading.Thread(target=procesar_pedido, args=(STOCK_INICIAL, PEDIDOS, solicitudes_reposicion, REPOSICIONES)) for _ in range(NUM_CAJAS - 1)]
-    lista_hilos_reposiciones = [threading.Thread(target=reposiciones_almacen, args=(STOCK_INICIAL, REPOSICIONES, solicitudes_reposicion)) for _ in range(1)]
+    lista_hilos_pedidos = [threading.Thread(target=procesar_pedido, args=(STOCK_INICIAL, PEDIDOS, solicitudes_reposicion, REPOSICIONES)) for _ in range(NUM_CAJAS)]
+    lista_hilos_reposiciones = [threading.Thread(target=reposiciones_almacen, args=(STOCK_INICIAL, REPOSICIONES, solicitudes_reposicion)) for _ in range(2)]
 
     for hilo in lista_hilos_pedidos:
         hilo.start()
@@ -71,6 +72,10 @@ if __name__ == "__main__":
 
     for hilo in lista_hilos_pedidos:
         hilo.join()
+        print("!!!!!!!!!!!!Caja terminada")
     
     for hilo in lista_hilos_reposiciones:
         hilo.join()
+        print("!!!!!!!!!!!!!!!Reposicion terminada")
+
+    print("PROGRAMA TERMINADO")
