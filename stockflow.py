@@ -54,32 +54,37 @@ def reposiciones_almacen(stock:dict, reposiciones:list, solicitudes:list, reposi
             condition.notify_all()
             print("Notificacion hecha")
 
-
+def revision_catalogo():
+    pass
 
 if __name__ == "__main__":
 
     lock = threading.Lock()
     semaforo = threading.Semaphore(NUM_TERMINALES)
     condition = threading.Condition()
+    barrera = threading.Barrier(NUM_REVISORES)
 
     solicitudes_reposicion = []
     reposiciones_procesadas = set()
     
     lista_hilos_pedidos = [threading.Thread(target=procesar_pedido, args=(STOCK_INICIAL, PEDIDOS, solicitudes_reposicion, REPOSICIONES)) for _ in range(NUM_CAJAS)]
     lista_hilos_reposiciones = [threading.Thread(target=reposiciones_almacen, args=(STOCK_INICIAL, REPOSICIONES, solicitudes_reposicion, reposiciones_procesadas)) for _ in range(2)]
+    lista_hilos_revisores = [threading.Thread(target=revision_catalogo, args=(STOCK_INICIAL, REPOSICIONES, solicitudes_reposicion, reposiciones_procesadas)) for _ in range(NUM_REVISORES)]
 
     for hilo in lista_hilos_pedidos:
         hilo.start()
         
     for hilo in lista_hilos_reposiciones:
         hilo.start()
+        
+    for hilo in lista_hilos_revisores:
+        hilo.start()
 
     for hilo in lista_hilos_pedidos:
         hilo.join()
-        print("!!!!!!!!!!!!Caja terminada")
     
     for hilo in lista_hilos_reposiciones:
         hilo.join()
-        print("!!!!!!!!!!!!!!!Reposicion terminada")
-
-    print("PROGRAMA TERMINADO")
+        
+    for hilo in lista_hilos_revisores:
+        hilo.join()
